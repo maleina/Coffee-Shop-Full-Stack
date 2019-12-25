@@ -12,7 +12,7 @@ setup_db(app)
 CORS(app)
 
 '''
-@DONE uncomment the following line to initialize the datbase
+@DONE uncomment the following line to initialize the database
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
@@ -52,7 +52,7 @@ def retrieve_drinks():
 
 
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     GET /drinks-detail
         it should require the 'get:drinks-detail' permission
         it should contain the drink.long() data representation
@@ -92,6 +92,7 @@ def create_drink(payload):
     req_recipe = body.get('recipe', None)
     if (req_title is None) or (req_recipe is None):
         return abort(422)
+    # TODO revisit the line below. Also add drink.long() after drink=... + try except blocks for all db operations
     if type(req_recipe) is not list:
         req_recipe = [req_recipe]
     drink = Drink(title=req_title, recipe=json.dumps(req_recipe))
@@ -99,7 +100,7 @@ def create_drink(payload):
         drink.insert()
     else:
         return abort(422)
-    return jsonify({'success': True, "drinks": drink.long()})
+    return jsonify({'success': True, "drinks": [drink.long()]})
 
 
 '''
@@ -113,6 +114,31 @@ def create_drink(payload):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks/<int:id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def update_drink(payload, id):
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+    if drink is None:
+        abort(404)
+    body = request.get_json()
+    req_title = body.get('title', None)
+    req_recipe = body.get('recipe', None)
+    if (req_title is None) and (req_recipe is None):
+        return abort(422)
+    if req_title is not None:
+        drink.title = req_title
+    if req_recipe is not None:
+        if type(req_recipe) is not list:
+            req_recipe = [req_recipe]
+        drink.recipe = json.dumps(req_recipe)
+    try:
+        drink.update()
+    except:
+        abort(422)
+    return jsonify({"success": True, "drinks": [drink.long()]})
+
 
 '''
 @TODO implement endpoint
