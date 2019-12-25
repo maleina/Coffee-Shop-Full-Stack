@@ -40,15 +40,15 @@ CORS(app)
 '''
 
 
-# @app.route('/drinks')
-# def retrieve_drinks():
-#     selection = Drink.query.all()
-#     drinks = [drink.short() for drink in selection]
-#     # Abort if there are no drinks in the database,
-#     # otherwise, return all drinks in short form
-#     if len(drinks) == 0:
-#         abort(404)
-#     return jsonify({'success': True, "drinks": drinks})
+@app.route('/drinks')
+def retrieve_drinks():
+    selection = Drink.query.all()
+    drinks = [drink.short() for drink in selection]
+    # Abort if there are no drinks in the database,
+    # otherwise, return all drinks in short form
+    if len(drinks) == 0:
+        abort(404)
+    return jsonify({'success': True, "drinks": drinks})
 
 
 '''
@@ -69,6 +69,25 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks', methods=['POST'])
+@requires_auth('post:drinks')
+def create_drink(payload):
+    body = request.get_json()
+    req_title = body.get('title', None)
+    req_recipe = body.get('recipe', None)
+    if (req_title is None) or (req_recipe is None):
+        return abort(422)
+    if type(req_recipe) is not list:
+        req_recipe = [req_recipe]
+    drink = Drink(title=req_title, recipe=json.dumps(req_recipe))
+    if not drink.is_duplicate():
+        drink.insert()
+    else:
+        return abort(422)
+    return jsonify({'success': True, "drinks": drink.long()})
+
 
 '''
 @TODO implement endpoint

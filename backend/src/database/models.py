@@ -1,6 +1,7 @@
 import os
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, func
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import exists
 import json
 
 database_filename = "database.db"
@@ -65,6 +66,17 @@ class Drink(db.Model):
             'title': self.title,
             'recipe': json.loads(self.recipe)
         }
+
+    '''
+    isDuplicate()
+        checks to see if a drink that is to be inserted 
+        already exists in the database
+    '''
+    def is_duplicate(self):
+        return db.session.query(exists().where(func.lower(Drink.title) == func.lower(
+            self.title))).scalar()
+
+
 
     '''
     insert()

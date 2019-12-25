@@ -110,21 +110,10 @@ def check_permissions(permission, payload):
 
 
 def verify_decode_jwt(token):
-    print("In Decode")
-
     myurl = 'https://%s/.well-known/jwks.json' % (AUTH0_DOMAIN)
-    print("Will try to open " + myurl)
     jsonurl = urlopen(myurl)
-    # try:
-    #     jsonurl = urlopen(myurl)
-    # except urllib.error.URLError as e:
-    #     print(e.reason)
-
-    print("Able to open")
     content = jsonurl.read().decode(jsonurl.headers.get_content_charset())
-    print("Able to read content")
     jwks = json.loads(content)
-    print("Loaded content")
 
     unverified_header = jwt.get_unverified_header(token)
     rsa_key = {}
@@ -152,7 +141,6 @@ def verify_decode_jwt(token):
                 audience=API_AUDIENCE,
                 issuer='https://' + AUTH0_DOMAIN + '/'
             )
-
             return payload
 
         except jwt.ExpiredSignatureError:
