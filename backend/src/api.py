@@ -12,7 +12,7 @@ setup_db(app)
 CORS(app)
 
 '''
-@TODO uncomment the following line to initialize the datbase
+@DONE uncomment the following line to initialize the datbase
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
@@ -31,7 +31,7 @@ CORS(app)
 
 
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     GET /drinks
         it should be a public endpoint
         it should contain only the drink.short() data representation
@@ -60,8 +60,21 @@ def retrieve_drinks():
         or appropriate status code indicating reason for failure
 '''
 
+
+@app.route('/drinks-detail')
+@requires_auth('get:drinks-detail')
+def retrieve_drink_detail(payload):
+    selection = Drink.query.all()
+    drinks = [drink.long() for drink in selection]
+    # Abort if there are no drinks in the database,
+    # otherwise, return all drinks in short form
+    if len(drinks) == 0:
+        abort(404)
+    return jsonify({"success": True, "drinks": drinks})
+
+
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     POST /drinks
         it should create a new row in the drinks table
         it should require the 'post:drinks' permission
@@ -128,7 +141,7 @@ def unprocessable(error):
 
 
 '''
-@TODO implement error handlers using the @app.errorhandler(error) decorator
+@DONE implement error handlers using the @app.errorhandler(error) decorator
     each error handler should return (with approprate messages):
              jsonify({
                     "success": False, 
@@ -167,7 +180,7 @@ def forbidden(error):
 
 
 '''
-@TODO implement error handler for 404
+@DONE implement error handler for 404
     error handler should conform to general task above 
 '''
 
@@ -182,7 +195,7 @@ def not_found(error):
 
 
 '''
-@TODO implement error handler for AuthError
+@DONE implement error handler for AuthError
     error handler should conform to general task above 
 '''
 
