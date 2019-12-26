@@ -42,6 +42,7 @@ CORS(app)
 
 @app.route('/drinks')
 def retrieve_drinks():
+    # Retrieve drinks and format them correctly
     selection = Drink.query.all()
     drinks = [drink.short() for drink in selection]
     # Abort if there are no drinks in the database,
@@ -64,10 +65,12 @@ def retrieve_drinks():
 @app.route('/drinks-detail')
 @requires_auth('get:drinks-detail')
 def retrieve_drink_detail(payload):
+    # Retrieve drinks and format them correctly
     selection = Drink.query.all()
     drinks = [drink.long() for drink in selection]
+
     # Abort if there are no drinks in the database,
-    # otherwise, return all drinks in short form
+    # otherwise, return all drinks in long form
     if len(drinks) == 0:
         abort(404)
     return jsonify({"success": True, "drinks": drinks})
@@ -87,21 +90,33 @@ def retrieve_drink_detail(payload):
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
 def create_drink(payload):
-    body = request.get_json()
-    req_title = body.get('title', None)
-    req_recipe = body.get('recipe', None)
-    if (req_title is None) or (req_recipe is None):
-        return abort(422)
-    if type(req_recipe) is not list:
-        req_recipe = [req_recipe]
-    drink = Drink(title=req_title, recipe=json.dumps(req_recipe))
-    if drink.is_duplicate():
-        abort(422)
     try:
+        # Get new drink data from request
+        body = request.get_json()
+        req_title = body.get('title', None)
+        req_recipe = body.get('recipe', None)
+
+        # Validate that title and recipe are both present
+        # If not, abort
+        if (req_title is None) or (req_recipe is None):
+            return abort(422)
+
+        # If the recipe has not been input as a list,
+        # format it correctly and create the drink object
+        if type(req_recipe) is not list:
+            req_recipe = [req_recipe]
+        drink = Drink(title=req_title, recipe=json.dumps(req_recipe))
+
+        # Abort if the drink is already present in the database
+        if drink.is_duplicate():
+            abort(422)
+
+        # Otherwise, create a row in the database for the drink
         drink.insert()
+        return jsonify({'success': True, "drinks": [drink.long()]})
     except:
         abort(422)
-    return jsonify({'success': True, "drinks": [drink.long()]})
+
 
 
 '''
@@ -120,25 +135,29 @@ def create_drink(payload):
 @app.route('/drinks/<int:id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
 def update_drink(payload, id):
-    drink = Drink.query.filter(Drink.id == id).one_or_none()
-    if drink is None:
-        abort(404)
-    body = request.get_json()
-    req_title = body.get('title', None)
-    req_recipe = body.get('recipe', None)
-    if (req_title is None) and (req_recipe is None):
-        return abort(422)
-    if req_title is not None:
-        drink.title = req_title
-    if req_recipe is not None:
-        if type(req_recipe) is not list:
-            req_recipe = [req_recipe]
-        drink.recipe = json.dumps(req_recipe)
     try:
+        # Find the drink with the given id,
+        # if it doesn't exist abort
+        drink = Drink.query.filter(Drink.id == id).one_or_none()
+        if drink is None:
+            abort(404)
+
+        # Retrieve the updated drink data
+        body = request.get_json()
+        req_title = body.get('title', None)
+        req_recipe = body.get('recipe', None)
+
+        # Update the drink with the new values
+        if req_title is not None:
+            drink.title = req_title
+        if req_recipe is not None:
+            if type(req_recipe) is not list:
+                req_recipe = [req_recipe]
+            drink.recipe = json.dumps(req_recipe)
         drink.update()
+        return jsonify({"success": True, "drinks": [drink.long()]})
     except:
         abort(422)
-    return jsonify({"success": True, "drinks": [drink.long()]})
 
 
 '''
