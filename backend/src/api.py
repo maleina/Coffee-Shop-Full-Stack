@@ -92,19 +92,20 @@ def create_drink(payload):
     req_recipe = body.get('recipe', None)
     if (req_title is None) or (req_recipe is None):
         return abort(422)
-    # TODO revisit the line below. Also add drink.long() after drink=... + try except blocks for all db operations
     if type(req_recipe) is not list:
         req_recipe = [req_recipe]
     drink = Drink(title=req_title, recipe=json.dumps(req_recipe))
-    if not drink.is_duplicate():
+    if drink.is_duplicate():
+        abort(422)
+    try:
         drink.insert()
-    else:
-        return abort(422)
+    except:
+        abort(422)
     return jsonify({'success': True, "drinks": [drink.long()]})
 
 
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     PATCH /drinks/<id>
         where <id> is the existing model id
         it should respond with a 404 error if <id> is not found
