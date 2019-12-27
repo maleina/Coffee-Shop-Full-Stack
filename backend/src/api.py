@@ -114,7 +114,7 @@ def create_drink(payload):
         # Otherwise, create a row in the database for the drink.
         drink.insert()
         return jsonify({'success': True, "drinks": [drink.long()]})
-    except:
+    except AuthError:
         abort(422)
 
 
@@ -155,7 +155,7 @@ def update_drink(payload, id):
             drink.recipe = json.dumps(req_recipe)
         drink.update()
         return jsonify({"success": True, "drinks": [drink.long()]})
-    except:
+    except AuthError:
         abort(422)
 
 
@@ -183,7 +183,7 @@ def delete_drink(payload, id):
 
         drink.delete()
         return jsonify({"success": True, "delete": id})
-    except:
+    except AuthError:
         abort(422)
 
 

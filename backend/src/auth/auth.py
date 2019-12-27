@@ -34,6 +34,7 @@ class AuthError(Exception):
 
 def get_token_auth_header():
     # Obtains the Access Token from the Authorization Header.
+    # Perform basic validation.
     auth = request.headers.get('Authorization', None)
     if not auth:
         raise AuthError({
@@ -108,19 +109,24 @@ def check_permissions(permission, payload):
 
 
 def verify_decode_jwt(token):
+    # Retrieve json web key set from Auth0 for verification process.
     myurl = 'https://%s/.well-known/jwks.json' % (AUTH0_DOMAIN)
     jsonurl = urlopen(myurl)
     content = jsonurl.read().decode(jsonurl.headers.get_content_charset())
     jwks = json.loads(content)
 
+    # Obtain the Authorization Header.
     unverified_header = jwt.get_unverified_header(token)
     rsa_key = {}
+
+    # Verify that the key identifier (kid) is present.
     if 'kid' not in unverified_header:
         raise AuthError({
             'code': 'invalid_header',
             'description': 'Authorization malformed.'
         }, 401)
 
+    # Unpack the keys from the header.
     for key in jwks['keys']:
         if key['kid'] == unverified_header['kid']:
             rsa_key = {
@@ -130,6 +136,8 @@ def verify_decode_jwt(token):
                 'n': key['n'],
                 'e': key['e']
             }
+
+    # If the keys are present, decode and return the token payload.
     if rsa_key:
         try:
             payload = jwt.decode(
@@ -141,6 +149,7 @@ def verify_decode_jwt(token):
             )
             return payload
 
+        # Process any errors according to the appropriate type.
         except jwt.ExpiredSignatureError:
             raise AuthError({
                 'code': 'token_expired',
@@ -181,15 +190,15 @@ def requires_auth(permission=''):
         def wrapper(*args, **kwargs):
             try:
                 token = get_token_auth_header()
-            except:
+            except AuthError:
                 abort(401)
             try:
                 payload = verify_decode_jwt(token)
-            except:
+            except AuthError:
                 abort(401)
             try:
                 check_permissions(permission, payload)
-            except:
+            except AuthError:
                 abort(401)
             return f(payload, *args, **kwargs)
 
