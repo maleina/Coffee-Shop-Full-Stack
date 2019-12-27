@@ -1,8 +1,12 @@
 venv/
+env/
 .vscode/
 .idea/
 __pycache__/
 test.db
+backend/README.md
+frontend/README.md
+frontend/node_modules
 
 # OS generated files #
 ######################
